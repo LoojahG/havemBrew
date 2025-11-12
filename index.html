@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gourmet Grinds - Premium Coffee Store</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f8f8;
+        }
+
+        /* Cart drawer animation */
+        .cart-drawer {
+            transition: transform 0.3s ease-out;
+            transform: translateX(100%);
+        }
+
+        .cart-drawer.open {
+            transform: translateX(0);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen">
+
+    <!-- Header & Navigation -->
+    <header class="bg-slate-900 shadow-lg sticky top-0 z-10">
+        <div class="container mx-auto p-4 flex justify-between items-center">
+            <a href="index.html" class="text-2xl font-bold text-amber-400">Bhoto Coffee</a>
+
+            <nav class="flex items-center space-x-6 text-white">
+                <a href="index.html" class="text-amber-400 font-semibold">Home</a>
+                <a href="about.html" class="hover:text-amber-400 transition">About</a>
+
+                <!-- Cart button -->
+                <button id="openCartBtn"
+                    class="p-2 bg-amber-400 text-slate-900 rounded-lg hover:bg-amber-500 transition-colors focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-opacity-50 flex items-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                        stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    <span id="cartCount" class="ml-2 font-semibold">0</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        <h2 class="text-4xl font-extrabold text-slate-800 mb-8 text-center">Featured Products</h2>
+
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Product cards injected by JS -->
+        </div>
+    </main>
+
+    <!-- Shopping Cart Drawer -->
+    <div id="cartDrawer"
+        class="cart-drawer fixed top-0 right-0 w-full sm:w-96 h-full bg-white shadow-2xl z-20 flex flex-col p-6">
+        <div class="flex justify-between items-center border-b pb-4 mb-4">
+            <h3 class="text-2xl font-bold text-slate-800">Your Cart</h3>
+            <button id="closeCartBtn" class="text-slate-500 hover:text-slate-900 p-1 rounded-full">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- Cart Items List -->
+        <div id="cartItemsList" class="flex-grow overflow-y-auto space-y-4">
+            <p id="emptyCartMessage" class="text-center text-slate-500 hidden">
+                Your cart is empty. Start adding some delicious coffee!
+            </p>
+        </div>
+
+        <!-- Cart Summary & Checkout -->
+        <div id="cartSummary" class="mt-6 pt-4 border-t">
+            <div class="flex justify-between text-xl font-semibold mb-2 text-slate-800">
+                <span>Subtotal:</span>
+                <span id="cartSubtotal">$0.00</span>
+            </div>
+            <div class="flex justify-between text-base font-medium mb-4 text-slate-600">
+                <span>Total Payable (via eSewa):</span>
+                <span id="cartTotal">$0.00</span>
+            </div>
+            <button id="checkoutBtn"
+                class="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition-colors disabled:bg-slate-400 flex items-center justify-center space-x-2"
+                disabled>
+                <span>Pay with eSewa</span>
+                <img src="https://esewa.com.np/common/images/esewa_logo_dark.png" class="h-5"
+                    onerror="this.onerror=null; this.src='https://placehold.co/80x20/4ade80/ffffff?text=eSewa';"
+                    alt="eSewa Logo">
+            </button>
+        </div>
+    </div>
+
+    <!-- Backdrop -->
+    <div id="cartBackdrop" class="fixed inset-0 bg-black bg-opacity-50 z-10 hidden" onclick="toggleCart(false)"></div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden items-center justify-center p-4">
+        <div class="bg-white p-6 rounded-xl shadow-2xl w-full max-w-lg">
+            <h4 class="text-2xl font-bold text-slate-800 mb-4 border-b pb-2">Confirm Payment with eSewa</h4>
+            <div id="orderConfirmationDetails" class="space-y-3 mb-6"></div>
+            <div id="esewaFormContainer"></div>
+            <div class="flex justify-end mt-4">
+                <button id="cancelPaymentBtn"
+                    class="py-2 px-4 bg-slate-200 text-slate-700 font-semibold rounded-lg hover:bg-slate-300 transition-colors">
+                    Cancel Payment
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 text-white text-center py-6 mt-12">
+        <p class="text-sm">&copy; 2025 Gourmet Grinds. All rights reserved.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        const products = [
+            { id: 1, name: "Premium Coffee Beans (1kg)", price: 1500, image: "https://tse3.mm.bing.net/th/id/OIP.EdfNyU32ADhVnVoM1zDYzwHaF7?cb=ucfimgc2&w=740&h=592&rs=1&pid=ImgDetMain&o=7&rm=3" },
+            { id: 2, name: "Ceramic Mug Set (4 pcs)", price: 2000, image: "https://theculinarium.co.za/cdn/shop/products/George_Mason-4XMUGS.jpg?v=1671786974&width=1920" },
+            { id: 3, name: "French Press Maker (Large)", price: 8000, image: "https://bing.com/th?id=OSK.51366f7b89cb07b21919f19d48df1b15" },
+            { id: 4, name: "Espresso Tamper", price: 3000, image: "https://th.bing.com/th/id/OIP.762ZdmBzOi7CM3VQl5WyDwHaGQ?w=209&h=180&c=7&r=0&o=7&cb=ucfimgc2&pid=1.7&rm=3" },
+            { id: 5, name: "Manual Coffee Grinder", price: 4500, image: "https://tse3.mm.bing.net/th/id/OIP.RGrLXiGnJjhR6sDAejbHkwHaJg?cb=ucfimgc2&rs=1&pid=ImgDetMain&o=7&rm=3" },
+            { id: 6, name: "Coffee Storage Jar (Airtight)", price: 2500, image: "https://m.media-amazon.com/images/I/616odNZ63nL._AC_SL1500_.jpg" }
+        ];
+
+
+        let cart = [];
+
+        const ESEWA_URL = "https://uat.esewa.com.np/epay/main";
+        const ESEWA_SERVICE_CODE = "EPAYTEST";
+        const ESEWA_SUCCESS_URL = "http://example.com/esewa_success";
+        const ESEWA_FAILURE_URL = "http://example.com/esewa_failure";
+
+        const productGrid = document.getElementById('productGrid');
+        const cartDrawer = document.getElementById('cartDrawer');
+        const cartBackdrop = document.getElementById('cartBackdrop');
+        const openCartBtn = document.getElementById('openCartBtn');
+        const closeCartBtn = document.getElementById('closeCartBtn');
+        const cartCount = document.getElementById('cartCount');
+        const cartSubtotal = document.getElementById('cartSubtotal');
+        const cartTotal = document.getElementById('cartTotal');
+        const cartItemsList = document.getElementById('cartItemsList');
+        const checkoutBtn = document.getElementById('checkoutBtn');
+        const emptyCartMessage = document.getElementById('emptyCartMessage');
+        const paymentModal = document.getElementById('paymentModal');
+        const orderConfirmationDetails = document.getElementById('orderConfirmationDetails');
+        const esewaFormContainer = document.getElementById('esewaFormContainer');
+        const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
+
+        const formatCurrency = (amount) => `रु ${amount.toFixed(2)}`;
+        const generateOrderId = () => `ORDER_${Date.now()}`;
+        const getCartSubtotal = () => cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+
+        function updateCartDisplay() {
+            const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
+            cartCount.textContent = totalItems;
+
+            const subtotal = getCartSubtotal();
+            const totalPayable = subtotal;
+
+            cartSubtotal.textContent = formatCurrency(subtotal);
+            cartTotal.textContent = formatCurrency(totalPayable);
+
+            cartItemsList.innerHTML = '';
+            if (cart.length === 0) {
+                emptyCartMessage.classList.remove('hidden');
+                checkoutBtn.disabled = true;
+            } else {
+                emptyCartMessage.classList.add('hidden');
+                checkoutBtn.disabled = false;
+                cart.forEach(item => {
+                    cartItemsList.appendChild(createCartItemElement(item));
+                });
+            }
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            const existing = cart.find(item => item.id === id);
+            if (existing) existing.quantity++;
+            else cart.push({ ...product, quantity: 1 });
+            updateCartDisplay();
+        }
+
+        function removeFromCart(id) {
+            cart = cart.filter(item => item.id !== id);
+            updateCartDisplay();
+        }
+
+        function updateQuantity(id, qty) {
+            const item = cart.find(i => i.id === id);
+            if (item) item.quantity = Math.max(1, parseInt(qty, 10));
+            updateCartDisplay();
+        }
+
+       function createProductCard(product) {
+    const div = document.createElement('div');
+    div.className = 'bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow flex flex-col';
+    div.innerHTML = `
+      <div class="w-full h-48 flex items-center justify-center mb-4">
+        <img src="${product.image}" alt="${product.name}" class="max-h-48 w-auto object-contain">
+      </div>
+      <h3 class="text-xl font-semibold text-slate-900 mb-2">${product.name}</h3>
+      <p class="text-3xl font-bold text-amber-500 mb-4">${formatCurrency(product.price)}</p>
+      <button class="addToCartBtn mt-auto w-full py-2 bg-amber-500 text-white font-bold rounded-lg hover:bg-amber-600 transition-colors"
+        data-id="${product.id}">Add to Cart</button>
+    `;
+    return div;
+}
+
+        function createCartItemElement(item) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center space-x-4 p-3 bg-slate-50 rounded-lg';
+            div.innerHTML = `
+        <img src="${item.image}" alt="${item.name}" class="w-16 h-16 rounded-md object-cover">
+        <div class="flex-grow">
+          <p class="text-base font-semibold text-slate-800">${item.name}</p>
+          <p class="text-sm text-slate-600">${formatCurrency(item.price)}</p>
+        </div>
+        <input type="number" min="1" value="${item.quantity}" data-id="${item.id}" class="w-14 border rounded-md text-center">
+        <button data-id="${item.id}" class="text-red-500 hover:text-red-700 p-1">✕</button>
+      `;
+
+            div.querySelector('input').addEventListener('change', e => updateQuantity(item.id, e.target.value));
+            div.querySelector('button').addEventListener('click', () => removeFromCart(item.id));
+            return div;
+        }
+
+        function toggleCart(open) {
+            if (open) {
+                cartDrawer.classList.add('open');
+                cartBackdrop.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                cartDrawer.classList.remove('open');
+                cartBackdrop.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+        }
+
+        function handleCheckout() {
+            if (cart.length === 0) return;
+            toggleCart(false);
+
+            const subtotal = getCartSubtotal().toFixed(2);
+            const pid = generateOrderId();
+
+            const params = {
+                amt: subtotal, txAmt: "0", psc: "0", pdc: "0",
+                tAmt: subtotal, scd: ESEWA_SERVICE_CODE, pid: pid,
+                su: ESEWA_SUCCESS_URL, fu: ESEWA_FAILURE_URL
+            };
+
+            let formHtml = `<form method="POST" action="${ESEWA_URL}" class="flex flex-col space-y-4">`;
+            for (const key in params)
+                formHtml += `<input type="hidden" name="${key}" value="${params[key]}">`;
+            formHtml += `<input type="submit" value="Continue to eSewa Payment" 
+          class="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 transition cursor-pointer"/> </form>`;
+
+            orderConfirmationDetails.innerHTML = `
+        <p class="text-base font-medium text-slate-600">Order ID: <span class="font-bold text-slate-900">${pid}</span></p>
+        <div class="flex justify-between">
+          <p class="text-xl font-medium">Subtotal:</p>
+          <p class="text-xl font-bold text-slate-900">${formatCurrency(parseFloat(subtotal))}</p>
+        </div>`;
+            esewaFormContainer.innerHTML = formHtml;
+            paymentModal.classList.add('flex');
+            paymentModal.classList.remove('hidden');
+
+            cancelPaymentBtn.onclick = () => {
+                paymentModal.classList.add('hidden');
+                paymentModal.classList.remove('flex');
+            };
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            products.forEach(p => productGrid.appendChild(createProductCard(p)));
+            productGrid.addEventListener('click', e => {
+                const btn = e.target.closest('.addToCartBtn');
+                if (btn) {
+                    addToCart(parseInt(btn.dataset.id, 10));
+                    toggleCart(true);
+                }
+            });
+            openCartBtn.addEventListener('click', () => toggleCart(true));
+            closeCartBtn.addEventListener('click', () => toggleCart(false));
+            checkoutBtn.addEventListener('click', handleCheckout);
+            updateCartDisplay();
+        });
+    </script>
+</body>
+
+</html>
